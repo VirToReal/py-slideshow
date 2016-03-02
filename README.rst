@@ -6,8 +6,14 @@ Random image slideshow in Python with OpenGL pan/zoom effects.
 
 .. image:: icon.png
 
-* Corey Goldberg, (c) 2013, (http://goldb.org)
-* License: GNU GPLv3
+*  Copyright (c) 2015, Jamin W. Collins <jamin.collins@gmail.com>
+*  Dev: https://github.com/jamincollins/py-slideshow
+*
+*  Based on work done by Corey Goldberg
+*  Copyright (c) 2013, 2015, Corey Goldberg
+*
+*  Dev: https://github.com/cgoldberg/py-slideshow
+*  License: GPLv3
 
 ----
 
@@ -26,6 +32,6 @@ Random image slideshow in Python with OpenGL pan/zoom effects.
 
 **Example**::
 
-    $ git clone https://github.com/cgoldberg/py-slideshow.git
+    $ git clone https://github.com/jamincollins/py-slideshow.git
     $ cd py-slideshow
-    $ python slideshow.py /home/cgoldberg/images/
+    $ python slideshow.py images/

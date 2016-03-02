@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 #
+#  Copyright (c) 2015, Jamin W. Collins <jamin.collins@gmail.com>
+#  Dev: https://github.com/jamincollins/py-slideshow
+#
+#  Based on work done by Corey Goldberg
 #  Copyright (c) 2013, 2015, Corey Goldberg
 #
 #  Dev: https://github.com/cgoldberg/py-slideshow
