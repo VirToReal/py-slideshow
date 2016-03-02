@@ -45,9 +45,9 @@ def update_image(dt):
 def get_image_paths(input_dir='.'):
     paths = []
     for root, dirs, files in os.walk(input_dir, topdown=True):
-        for file in sorted(files):
-            if file.endswith(('jpg', 'png', 'gif')):
-                path = os.path.abspath(os.path.join(root, file))
+        for filename in sorted(files):
+            if filename.endswith(('jpg', 'png', 'gif')):
+                path = os.path.abspath(os.path.join(root, filename))
                 paths.append(path)
     return paths
 
