@@ -68,7 +68,9 @@ def on_draw():
     sprite.draw()
 
 
-if __name__ == '__main__':
+def main():
+    global sprite
+
     _pan_speed_x, _pan_speed_y, _zoom_speed = update_pan_zoom_speeds()
 
     parser = argparse.ArgumentParser()
@@ -86,3 +88,7 @@ if __name__ == '__main__':
     pyglet.clock.schedule_interval(update_zoom, 1/60.0)
 
     pyglet.app.run()
+
+
+if __name__ == '__main__':
+    main()
