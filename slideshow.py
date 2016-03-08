@@ -12,10 +12,17 @@
 
 import argparse
 import os
+import queue
 import random
+import select
+import sys
+import threading
 import time
 
+import inotify  # https://github.com/jamincollins/python-inotify
 import pyglet
+
+from inotify import watcher
 
 
 def update_pan_zoom_speeds():
@@ -38,7 +45,14 @@ def update_zoom(dt):
 
 
 def update_image(dt):
-    img = pyglet.image.load(random.choice(image_paths))
+    if not new_pics.empty():
+        # if there are images in queue, load the next, and add to known
+        filename = new_pics.get()
+        image_paths.append(filename)
+    else:
+        # otherwise load a random existing image
+        filename = random.choice(image_paths)
+    img = pyglet.image.load(filename)
     sprite.image = img
     sprite.scale = get_scale(window, img)
     sprite.x = 0
@@ -67,10 +81,51 @@ def get_scale(window, image):
     return scale
 
 
+def watch_for_new_images(input_dir):
+    w = watcher.AutoWatcher()
+    try:
+        # Watch all paths recursively, and all events on them.
+        w.add_all(input_dir, inotify.IN_ALL_EVENTS)
+    except OSError as err:
+        print('%s: %s' % (err.filename, err.strerror), file=sys.stderr)
+
+    poll = select.poll()
+    poll.register(w, select.POLLIN)
+
+    timeout = None
+
+    threshold = watcher.Threshold(w, 512)
+
+    while True:
+        events = poll.poll(timeout)
+        nread = 0
+        if threshold() or not events:
+            print('reading,', threshold.readable(), 'bytes available')
+            for evt in w.read(0):
+                nread += 1
+
+                events = inotify.decode_mask(evt.mask)
+                if 'IN_MOVED_TO' in events:
+                    filename = evt.fullpath
+                    if filename.endswith(('jpg', 'png', 'gif')):
+                        print("adding %s to the queue" % filename)
+                        new_pics.put(filename)
+
+        if nread:
+            timeout = None
+            poll.register(w, select.POLLIN)
+        else:
+            timeout = 1000
+            poll.unregister(w)
+
+
 def main():
     global sprite
     global image_paths
     global window
+    global new_pics
+
+    new_pics = queue.Queue()
 
     _pan_speed_x, _pan_speed_y, _zoom_speed = update_pan_zoom_speeds()
 
@@ -79,12 +134,16 @@ def main():
                         nargs='?', default=os.getcwd())
     args = parser.parse_args()
 
+    image_paths = get_image_paths(args.dir)
+    thread = threading.Thread(target=watch_for_new_images, args=(args.dir,))
+    thread.start()
+
     window = pyglet.window.Window(fullscreen=True)
 
     @window.event
     def on_draw():
         sprite.draw()
-    image_paths = get_image_paths(args.dir)
+
     img = pyglet.image.load(random.choice(image_paths))
     sprite = pyglet.sprite.Sprite(img)
     sprite.scale = get_scale(window, img)
