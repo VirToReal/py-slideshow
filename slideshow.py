@@ -74,6 +74,7 @@ def on_draw():
 
 def main():
     global sprite
+    global image_paths
 
     _pan_speed_x, _pan_speed_y, _zoom_speed = update_pan_zoom_speeds()
 
