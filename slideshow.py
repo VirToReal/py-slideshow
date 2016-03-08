@@ -64,17 +64,10 @@ def get_scale(window, image):
     return scale
 
 
-window = pyglet.window.Window(fullscreen=True)
-
-
-@window.event
-def on_draw():
-    sprite.draw()
-
-
 def main():
     global sprite
     global image_paths
+    global window
 
     _pan_speed_x, _pan_speed_y, _zoom_speed = update_pan_zoom_speeds()
 
@@ -83,6 +76,11 @@ def main():
                         nargs='?', default=os.getcwd())
     args = parser.parse_args()
 
+    window = pyglet.window.Window(fullscreen=True)
+
+    @window.event
+    def on_draw():
+        sprite.draw()
     image_paths = get_image_paths(args.dir)
     img = pyglet.image.load(random.choice(image_paths))
     sprite = pyglet.sprite.Sprite(img)
