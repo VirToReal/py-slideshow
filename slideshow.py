@@ -49,16 +49,22 @@ def update_image(dt):
         # if there are images in queue, load the next, and add to known
         filename = new_pics.get()
         image_paths.append(filename)
+    elif not image_paths:
+        return
     else:
         # otherwise load a random existing image
         filename = random.choice(image_paths)
-    img = pyglet.image.load(filename)
-    sprite.image = img
-    sprite.scale = get_scale(window, img)
-    sprite.x = 0
-    sprite.y = 0
-    update_pan_zoom_speeds()
-    window.clear()
+    try:
+        img = pyglet.image.load(filename)
+        sprite.image = img
+        sprite.scale = get_scale(window, img)
+        sprite.x = 0
+        sprite.y = 0
+        update_pan_zoom_speeds()
+        window.clear()
+    except FileNotFoundError:
+        # remove image from the list
+        image_paths.remove(filename)
 
 
 def get_image_paths(input_dir='.'):
