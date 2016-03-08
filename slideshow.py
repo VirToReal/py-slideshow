@@ -15,6 +15,7 @@ import os
 import queue
 import random
 import select
+import subprocess
 import sys
 import threading
 import time
@@ -125,6 +126,12 @@ def watch_for_new_images(input_dir):
             poll.unregister(w)
 
 
+def shove_mouse(dt):
+    get_vertical = "xdotool getdisplaygeometry | awk '{print $2}'"
+    cmd = "xdotool mousemove 0 $({0})".format(get_vertical)
+    subprocess.call(cmd, shell=True)
+
+
 def main():
     global sprite
     global image_paths
@@ -155,6 +162,7 @@ def main():
     sprite.scale = get_scale(window, img)
 
     pyglet.clock.schedule_interval(update_image, 6.0)
+    pyglet.clock.schedule_interval(shove_mouse, 6.0)
     # pyglet.clock.schedule_interval(update_pan, 1/60.0)
     # pyglet.clock.schedule_interval(update_zoom, 1/60.0)
 
