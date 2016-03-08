@@ -11,8 +11,8 @@
 
 
 import argparse
-import random
 import os
+import random
 
 import pyglet
 
