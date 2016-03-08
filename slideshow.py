@@ -89,8 +89,8 @@ def main():
     sprite.scale = get_scale(window, img)
 
     pyglet.clock.schedule_interval(update_image, 6.0)
-    pyglet.clock.schedule_interval(update_pan, 1/60.0)
-    pyglet.clock.schedule_interval(update_zoom, 1/60.0)
+    # pyglet.clock.schedule_interval(update_pan, 1/60.0)
+    # pyglet.clock.schedule_interval(update_zoom, 1/60.0)
 
     pyglet.app.run()
 
