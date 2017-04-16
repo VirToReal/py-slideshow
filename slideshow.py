@@ -62,10 +62,20 @@ def update_image(dt):
         sprite.x = 0
         sprite.y = 0
         update_pan_zoom_speeds()
+        
+        filenameext = os.path.split(filename)
+        filenamevar = os.path.splitext(filenameext[1])
+        filenamevar = filenamevar[0].replace('_', ' ')
+        filetime = time.localtime(os.path.getmtime(filename))
+        label.text = "<font color='#ffffff' size='5'>%s </font> <font color='#C0C0C0' size='3'> %s.%s.%s %s:%s:%s</font> " % (str(filenamevar), str(filetime[2]),str(filetime[1]), str(filetime[0]), str(filetime[3]), str(filetime[4]), str(filetime[5]))
+        window.clear()
+        
         window.clear()
     except FileNotFoundError:
         # remove image from the list
         image_paths.remove(filename)
+
+    
 
 
 def get_image_paths(input_dir='.'):
@@ -94,7 +104,7 @@ def watch_for_new_images(input_dir):
         # Watch all paths recursively, and all events on them.
         w.add_all(input_dir, inotify.IN_ALL_EVENTS)
     except OSError as err:
-        print('%s: %s' % (err.filename, err.strerror), file=sys.stderr)
+        print ('%s: %s' % (err.filename, err.strerror), file=sys.stderr)
 
     poll = select.poll()
     poll.register(w, select.POLLIN)
@@ -136,6 +146,7 @@ def main():
     global sprite
     global image_paths
     global window
+    global label
     global new_pics
 
     new_pics = queue.Queue()
@@ -152,10 +163,12 @@ def main():
     thread.start()
 
     window = pyglet.window.Window(fullscreen=True)
+    label = pyglet.text.HTMLLabel('', x=window.width//2, y=30, anchor_x='center', anchor_y='center')
 
     @window.event
     def on_draw():
         sprite.draw()
+        label.draw()
 
     img = pyglet.image.load(random.choice(image_paths))
     sprite = pyglet.sprite.Sprite(img)
@@ -163,8 +176,8 @@ def main():
 
     pyglet.clock.schedule_interval(update_image, 6.0)
     pyglet.clock.schedule_interval(shove_mouse, 6.0)
-    # pyglet.clock.schedule_interval(update_pan, 1/60.0)
-    # pyglet.clock.schedule_interval(update_zoom, 1/60.0)
+    #pyglet.clock.schedule_interval(update_pan, 1/60.0)
+    #pyglet.clock.schedule_interval(update_zoom, 1/60.0)
 
     pyglet.app.run()
 
