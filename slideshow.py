@@ -39,10 +39,12 @@ def update_pan_zoom_speeds():
 def update_pan(dt):
     sprite.x += dt * _pan_speed_x
     sprite.y += dt * _pan_speed_y
+    window.clear()
 
 
 def update_zoom(dt):
     sprite.scale += dt * _zoom_speed
+    window.clear()
 
 
 def update_image(dt):
@@ -69,13 +71,10 @@ def update_image(dt):
         filetime = time.localtime(os.path.getmtime(filename))
         label.text = "<font color='#ffffff' size='5'>%s </font> <font color='#C0C0C0' size='3'> %s.%s.%s %s:%s:%s</font> " % (str(filenamevar), str(filetime[2]),str(filetime[1]), str(filetime[0]), str(filetime[3]), str(filetime[4]), str(filetime[5]))
         window.clear()
-        
-        window.clear()
+
     except FileNotFoundError:
         # remove image from the list
         image_paths.remove(filename)
-
-    
 
 
 def get_image_paths(input_dir='.'):
@@ -113,7 +112,7 @@ def watch_for_new_images(input_dir):
 
     threshold = watcher.Threshold(w, 512)
 
-    while True:
+    while (not threadwhile.is_set()):
         events = poll.poll(timeout)
         nread = 0
         if threshold() or not events:
@@ -148,36 +147,45 @@ def main():
     global window
     global label
     global new_pics
+    global threadwhile
 
     new_pics = queue.Queue()
 
     _pan_speed_x, _pan_speed_y, _zoom_speed = update_pan_zoom_speeds()
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('dir', help='directory of images',
-                        nargs='?', default=os.getcwd())
+    parser.add_argument('dir', help='directory of images', nargs='?', default=os.getcwd())
+    parser.add_argument('-w', '--wait', help='time between each picture', type=float, dest='wait_time', default=3.0)
+    parser.add_argument('-e', '--effects', help='activate pan/zoom effects in slideshow', dest='effects', action='store_true', default=False)
     args = parser.parse_args()
 
     image_paths = get_image_paths(args.dir)
+    threadwhile = threading.Event()
     thread = threading.Thread(target=watch_for_new_images, args=(args.dir,))
     thread.start()
 
-    window = pyglet.window.Window(fullscreen=True)
+    window = pyglet.window.Window(fullscreen=False)
     label = pyglet.text.HTMLLabel('', x=window.width//2, y=30, anchor_x='center', anchor_y='center')
 
     @window.event
     def on_draw():
         sprite.draw()
         label.draw()
+    
+    def on_close():
+        print("try do close thread")
+        threadwhile.set() #stops 'watcher'-thread
 
     img = pyglet.image.load(random.choice(image_paths))
     sprite = pyglet.sprite.Sprite(img)
     sprite.scale = get_scale(window, img)
 
-    pyglet.clock.schedule_interval(update_image, 6.0)
-    pyglet.clock.schedule_interval(shove_mouse, 6.0)
-    #pyglet.clock.schedule_interval(update_pan, 1/60.0)
-    #pyglet.clock.schedule_interval(update_zoom, 1/60.0)
+    pyglet.clock.schedule_interval(update_image, args.wait_time)
+    #pyglet.clock.schedule_interval(shove_mouse, 6.0)
+    
+    if args.effects:
+        pyglet.clock.schedule_interval(update_pan, 1/60.0)
+        pyglet.clock.schedule_interval(update_zoom, 1/60.0)
 
     pyglet.app.run()
 
