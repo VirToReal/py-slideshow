@@ -2,7 +2,7 @@
 py-slideshow - image slideshow
 ==============================
 
-Random image slideshow in Python with OpenGL pan/zoom effects.
+Random image slideshow in Python with OpenGL pan/zoom effects and a timeray.
 
 .. image:: icon.png
 
