@@ -47,16 +47,38 @@ def update_zoom(dt):
     window.clear()
 
 
+def generate_timepos(img_time):
+    timemax = max(image_paths, key=lambda x:x[1])
+    timemin = min(image_paths, key=lambda x:x[1])
+    timediff = timemax[1] - timemin[1]
+    return int(((window.height-20)*(img_time-timemax[1]))/timediff)*(-1)
+
+
+def generate_timeray():
+    imgF = pyglet.image.load('Timepoint_Inactive.png')
+    timesprites = []
+    imagecount = len(image_paths)
+
+    for i in range (0, imagecount):
+        timesprites.append(pyglet.sprite.Sprite(imgF))
+        timesprites[i].x = 5 # Position of Timeline in Picutre from left
+        timesprites[i].y = generate_timepos(image_paths[i][1])
+    return timesprites
+
+
 def update_image(dt):
     if not new_pics.empty():
         # if there are images in queue, load the next, and add to known
         filename = new_pics.get()
-        image_paths.append(filename)
+        filetime = int(os.path.getmtime(filename))
+        image_paths.append((filename, filetime))
     elif not image_paths:
         return
     else:
         # otherwise load a random existing image
-        filename = random.choice(image_paths)
+        ramdomchoice = random.choice(image_paths)
+        filename = ramdomchoice[0]
+        filetime = ramdomchoice[1]
     try:
         img = pyglet.image.load(filename)
         sprite.image = img
@@ -64,17 +86,22 @@ def update_image(dt):
         sprite.x = 0
         sprite.y = 0
         update_pan_zoom_speeds()
-        
+
+        if args.timeray: # draw active Point for Timeline
+            activetimesprite.x = 5 # Position of Timeline in Picutre from left
+            activetimesprite.y = generate_timepos(filetime)
+
         filenameext = os.path.split(filename)
         filenamevar = os.path.splitext(filenameext[1])
         filenamevar = filenamevar[0].replace('_', ' ')
-        filetime = time.localtime(os.path.getmtime(filename))
+        filetime = time.localtime(filetime)
         label.text = "<font color='#ffffff' size='5'>%s </font> <font color='#C0C0C0' size='3'> %s.%s.%s %s:%s:%s</font> " % (str(filenamevar), str(filetime[2]),str(filetime[1]), str(filetime[0]), str(filetime[3]), str(filetime[4]), str(filetime[5]))
+
         window.clear()
 
     except FileNotFoundError:
         # remove image from the list
-        image_paths.remove(filename)
+        image_paths[0].remove(filename)
 
 
 def get_image_paths(input_dir='.'):
@@ -84,7 +111,8 @@ def get_image_paths(input_dir='.'):
             for filename in sorted(files):
                 if filename.endswith(('jpg', 'png', 'gif')):
                     path = os.path.abspath(os.path.join(root, filename))
-                    paths.append(path)
+                    filetime = int(os.path.getmtime(path))
+                    paths.append((path, filetime))
         time.sleep(.5)
     return paths
 
@@ -148,8 +176,11 @@ def main():
     global label
     global new_pics
     global threadwhile
+    global args
+    global activetimesprite
 
     new_pics = queue.Queue()
+    activetimesprite = None
 
     _pan_speed_x, _pan_speed_y, _zoom_speed = update_pan_zoom_speeds()
 
@@ -157,6 +188,7 @@ def main():
     parser.add_argument('dir', help='directory of images', nargs='?', default=os.getcwd())
     parser.add_argument('-w', '--wait', help='time between each picture', type=float, dest='wait_time', default=3.0)
     parser.add_argument('-e', '--effects', help='activate pan/zoom effects in slideshow', dest='effects', action='store_true', default=False)
+    parser.add_argument('-t', '--timeray', help='show timeray', dest='timeray', action='store_true', default=False)
     args = parser.parse_args()
 
     image_paths = get_image_paths(args.dir)
@@ -167,22 +199,40 @@ def main():
     window = pyglet.window.Window(fullscreen=False)
     label = pyglet.text.HTMLLabel('', x=window.width//2, y=30, anchor_x='center', anchor_y='center')
 
+    rndch = random.choice(image_paths)
+    img = pyglet.image.load(rndch[0])
+    time = rndch[1]
+
+    if args.timeray:
+        timesprites = generate_timeray()
+        imgT = pyglet.image.load('Timepoint_Active.png')
+        activetimesprite = pyglet.sprite.Sprite(imgT)
+        activetimesprite.x = 5 # Position of Timeline in Picutre from left
+        activetimesprite.y = generate_timepos(time)
+
     @window.event
     def on_draw():
         sprite.draw()
         label.draw()
-    
+        if args.timeray: # draw Points for Timeline
+            pyglet.gl.glLineWidth(3)
+            pyglet.graphics.draw(2, pyglet.gl.GL_LINES, ("v2f", (15, 10, 15, window.height-10)), ('c3B', (0, 0, 255, 0, 255, 0)))
+            for timesprite in timesprites:
+                timesprite.draw()
+            activetimesprite.draw()
+
+    @window.event
     def on_close():
-        print("try do close thread")
+        print ("closing application...")
         threadwhile.set() #stops 'watcher'-thread
 
-    img = pyglet.image.load(random.choice(image_paths))
+
     sprite = pyglet.sprite.Sprite(img)
     sprite.scale = get_scale(window, img)
 
     pyglet.clock.schedule_interval(update_image, args.wait_time)
     #pyglet.clock.schedule_interval(shove_mouse, 6.0)
-    
+
     if args.effects:
         pyglet.clock.schedule_interval(update_pan, 1/60.0)
         pyglet.clock.schedule_interval(update_zoom, 1/60.0)
