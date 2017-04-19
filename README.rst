@@ -7,6 +7,7 @@ Random image slideshow in Python with OpenGL pan/zoom effects.
 .. image:: icon.png
 
 *  Copyright (c) 2015, Jamin W. Collins <jamin.collins@gmail.com>
+*  Copyright (c) 2017, Benjamin Hirmer
 *  Dev: https://github.com/jamincollins/py-slideshow
 *
 *  Based on work done by Corey Goldberg
@@ -25,10 +26,18 @@ Random image slideshow in Python with OpenGL pan/zoom effects.
 **Command Line Help**::
 
     $ ./slideshow.py -h
-    usage: slideshow.py dir
+    usage: slideshow.py [-h] [-w WAIT_TIME] [-e] [-t] [dir]
 
     positional arguments:
-      dir              directory of images
+      dir                   directory of images
+
+    optional arguments:
+     -h, --help            show this help message and exit
+     -w WAIT_TIME, --wait WAIT_TIME
+                          time between each picture
+     -e, --effects         activate pan/zoom effects in slideshow
+     -t, --timeray         show timeray
+
 
 **Example**::
 
