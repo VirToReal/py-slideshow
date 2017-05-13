@@ -9,10 +9,6 @@
 #  Dev: https://github.com/cgoldberg/py-slideshow
 #  License: GPLv3
 
-#TODO
-# Zufallsbilderwaehler Ein/Aus
-# Ordner aus dem alle X Bilder eines nach dem anderen dargestellt wird
-
 
 import argparse
 import os
@@ -217,12 +213,10 @@ def main():
     parser.add_argument('dir', help='directory of images', nargs='?', default=os.getcwd())
     parser.add_argument('-w', '--wait', help='time between each picture', type=float, dest='wait_time', default=3.0)
     parser.add_argument('-r', '--random', help='random picture select', dest='random', action='store_true', default=False)
-    parser.add_argument('-i', '--insert', help='add every <INSERT> pictures a picture from <INSERT>', nargs=2)
+    parser.add_argument('-i', '--insert', help='add every <INSERT> pictures a picture from <INSERT> directory, example: -i 5 /home/user/pictures/', nargs=2)
     parser.add_argument('-e', '--effects', help='activate pan/zoom effects in slideshow', dest='effects', action='store_true', default=False)
     parser.add_argument('-t', '--timeray', help='show timeray', dest='timeray', action='store_true', default=False)
     args = parser.parse_args()
-
-    print(str(args.insert))
 
     if args.insert  :
         image_paths2 = get_image_paths(args.insert[1])
@@ -232,7 +226,7 @@ def main():
     thread = threading.Thread(target=watch_for_new_images, args=(args.dir,))
     thread.start()
 
-    window = pyglet.window.Window(fullscreen=False)
+    window = pyglet.window.Window(fullscreen=True)
     label = pyglet.text.HTMLLabel('', x=window.width//2, y=30, anchor_x='center', anchor_y='center')
 
     if args.random:
