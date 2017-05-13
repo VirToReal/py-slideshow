@@ -9,6 +9,10 @@
 #  Dev: https://github.com/cgoldberg/py-slideshow
 #  License: GPLv3
 
+#TODO
+# Zufallsbilderwaehler Ein/Aus
+# Ordner aus dem alle X Bilder eines nach dem anderen dargestellt wird
+
 
 import argparse
 import os
@@ -75,10 +79,34 @@ def update_image(dt):
     elif not image_paths:
         return
     else:
-        # otherwise load a random existing image
-        ramdomchoice = random.choice(image_paths)
-        filename = ramdomchoice[0]
-        filetime = ramdomchoice[1]
+        # otherwise load a existing image
+        global image_number
+        global images
+        if images > 0:
+            print ("ArgsInsert: " + str(args.insert[0]) + " ImageCount: " + str(images) + " Moduloresult: " + str(images % int(args.insert[0])))
+        if args.insert and images > 0 and images % int(args.insert[0]) == 0: # select a picture from 'insert' folder each 'n' pictures
+            global image_number2
+            image_number2 += 1
+            image_number += 1
+            images += 1
+            image_count2 = len(image_paths2)
+            if image_number2 == image_count2:
+                image_number2 = 0
+            filename = image_paths2[image_number2][0]
+        else:
+            images += 1
+            if args.random: # turn random picture-chooser on/off
+                ramdomchoice = random.choice(image_paths)
+                filename = ramdomchoice[0]
+                filetime = ramdomchoice[1]
+            else:
+                image_number += 1 # count up the selected image image_number
+                image_count = len(image_paths) # count number of avilable images
+                if image_number == image_count: # image_number reached its end
+                    image_number = 0 # reset image_number
+                selectimage = image_paths[image_number]
+                filename = selectimage[0]
+                filetime = selectimage[1]
     try:
         img = pyglet.image.load(filename)
         sprite.image = img
@@ -87,15 +115,16 @@ def update_image(dt):
         sprite.y = 0
         update_pan_zoom_speeds()
 
-        if args.timeray: # draw active Point for Timeline
+        if args.timeray and not args.insert[0]: # draw active Point for Timeline
             activetimesprite.x = 5 # Position of Timeline in Picutre from left
             activetimesprite.y = generate_timepos(filetime)
 
         filenameext = os.path.split(filename)
         filenamevar = os.path.splitext(filenameext[1])
         filenamevar = filenamevar[0].replace('_', ' ')
-        filetime = time.localtime(filetime)
-        label.text = "<font color='#ffffff' size='5'>%s </font> <font color='#C0C0C0' size='3'> %s.%s.%s %s:%s:%s</font> " % (str(filenamevar), str(filetime[2]),str(filetime[1]), str(filetime[0]), str(filetime[3]), str(filetime[4]), str(filetime[5]))
+        if not args.insert:
+            filetime = time.localtime(filetime)
+            label.text = "<font color='#ffffff' size='5'>%s </font> <font color='#C0C0C0' size='3'> %s.%s.%s %s:%s:%s</font> " % (str(filenamevar), str(filetime[2]),str(filetime[1]), str(filetime[0]), str(filetime[3]), str(filetime[4]), str(filetime[5]))
 
         window.clear()
 
@@ -172,6 +201,7 @@ def shove_mouse(dt):
 def main():
     global sprite
     global image_paths
+    global image_paths2
     global window
     global label
     global new_pics
@@ -181,15 +211,21 @@ def main():
 
     new_pics = queue.Queue()
     activetimesprite = None
-
     _pan_speed_x, _pan_speed_y, _zoom_speed = update_pan_zoom_speeds()
 
     parser = argparse.ArgumentParser()
     parser.add_argument('dir', help='directory of images', nargs='?', default=os.getcwd())
     parser.add_argument('-w', '--wait', help='time between each picture', type=float, dest='wait_time', default=3.0)
+    parser.add_argument('-r', '--random', help='random picture select', dest='random', action='store_true', default=False)
+    parser.add_argument('-i', '--insert', help='add every <INSERT> pictures a picture from <INSERT>', nargs=2)
     parser.add_argument('-e', '--effects', help='activate pan/zoom effects in slideshow', dest='effects', action='store_true', default=False)
     parser.add_argument('-t', '--timeray', help='show timeray', dest='timeray', action='store_true', default=False)
     args = parser.parse_args()
+
+    print(str(args.insert))
+
+    if args.insert  :
+        image_paths2 = get_image_paths(args.insert[1])
 
     image_paths = get_image_paths(args.dir)
     threadwhile = threading.Event()
@@ -199,9 +235,14 @@ def main():
     window = pyglet.window.Window(fullscreen=False)
     label = pyglet.text.HTMLLabel('', x=window.width//2, y=30, anchor_x='center', anchor_y='center')
 
-    rndch = random.choice(image_paths)
-    img = pyglet.image.load(rndch[0])
-    time = rndch[1]
+    if args.random:
+        rndch = random.choice(image_paths)
+        img = pyglet.image.load(rndch[0])
+        time = rndch[1]
+    else:
+        slch = image_paths[image_number]
+        img = pyglet.image.load(slch[0])
+        time = slch[1]
 
     if args.timeray:
         timesprites = generate_timeray()
@@ -241,4 +282,7 @@ def main():
 
 
 if __name__ == '__main__':
+    image_number = 0
+    image_number2 = 0
+    images = 0
     main()
