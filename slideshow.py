@@ -78,12 +78,11 @@ def update_image(dt):
         # otherwise load a existing image
         global image_number
         global images
-        if images > 0:
-            print ("ArgsInsert: " + str(args.insert[0]) + " ImageCount: " + str(images) + " Moduloresult: " + str(images % int(args.insert[0])))
+        #if images > 0:
+            #print ("ArgsInsert: " + str(args.insert[0]) + " ImageCount: " + str(images) + " Moduloresult: " + str(images % int(args.insert[0])) + " Total Images: " + str(len(image_paths)) + " Active Image: " + str(image_number) + " Total Insert Images: " + str(len(image_paths2)) + " Activated Insert Image: " + str(image_number2))
         if args.insert and images > 0 and images % int(args.insert[0]) == 0: # select a picture from 'insert' folder each 'n' pictures
             global image_number2
             image_number2 += 1
-            image_number += 1
             images += 1
             image_count2 = len(image_paths2)
             if image_number2 == image_count2:
@@ -104,6 +103,7 @@ def update_image(dt):
                 filename = selectimage[0]
                 filetime = selectimage[1]
     try:
+        window.clear()
         img = pyglet.image.load(filename)
         sprite.image = img
         sprite.scale = get_scale(window, img)
@@ -111,7 +111,7 @@ def update_image(dt):
         sprite.y = 0
         update_pan_zoom_speeds()
 
-        if args.timeray and not args.insert[0]: # draw active Point for Timeline
+        if args.timeray and not args.insert: # draw active Point for Timeline
             activetimesprite.x = 5 # Position of Timeline in Picutre from left
             activetimesprite.y = generate_timepos(filetime)
 
@@ -218,7 +218,7 @@ def main():
     parser.add_argument('-t', '--timeray', help='show timeray', dest='timeray', action='store_true', default=False)
     args = parser.parse_args()
 
-    if args.insert  :
+    if args.insert:
         image_paths2 = get_image_paths(args.insert[1])
 
     image_paths = get_image_paths(args.dir)
@@ -261,7 +261,7 @@ def main():
         print ("closing application...")
         threadwhile.set() #stops 'watcher'-thread
 
-
+    window.clear()
     sprite = pyglet.sprite.Sprite(img)
     sprite.scale = get_scale(window, img)
 
