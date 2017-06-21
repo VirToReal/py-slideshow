@@ -126,7 +126,7 @@ def update_image(dt):
 
     except FileNotFoundError:
         # remove image from the list
-        image_paths[0].remove(filename)
+        pass
 
 
 def get_image_paths(input_dir='.'):
@@ -174,7 +174,7 @@ def watch_for_new_images(input_dir):
                 nread += 1
 
                 events = inotify.decode_mask(evt.mask)
-                if 'IN_MOVED_TO' in events:
+                if 'IN_MOVED_TO' in events or 'IN_CREATE' in events:
                     filename = evt.fullpath
                     if filename.endswith(('jpg', 'png', 'gif')):
                         print("adding %s to the queue" % filename)
