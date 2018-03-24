@@ -26,7 +26,8 @@ Random image slideshow in Python with OpenGL pan/zoom effects and a timeray.
 **Command Line Help**::
 
     $ ./slideshow.py -h
-    usage: slideshow.py [-h] [-w WAIT_TIME] [-r] [-i INSERT INSERT] [-e] [-t]
+   usage: slideshow.py [-h] [-c CHECK_TIME] [-a AGE_OF_FILE] [-w WAIT_TIME] [-r]
+                    [-i INSERT INSERT] [-e] [-t]
                     [dir]
 
     positional arguments:
@@ -34,12 +35,18 @@ Random image slideshow in Python with OpenGL pan/zoom effects and a timeray.
 
     optional arguments:
       -h, --help            show this help message and exit
+      -c CHECK_TIME, --checktime CHECK_TIME
+                            check every <ms> for new pictures
+      -a AGE_OF_FILE, --ageoffile AGE_OF_FILE
+                            new pictures have to be at least <ms> old after been
+                            created. Depending on your system, pictures will take
+                            some time until completly copied/moved
       -w WAIT_TIME, --wait WAIT_TIME
                             time between each picture
       -r, --random          random picture select
       -i INSERT INSERT, --insert INSERT INSERT
-                            add every <INSERT> pictures a picture from <INSERT> directory
-                            example: -i 5 /home/user/pictures/
+                            add every <INSERT> pictures a picture from <INSERT>
+                            directory, example: -i 5 /home/user/pictures/
       -e, --effects         activate pan/zoom effects in slideshow
       -t, --timeray         show timeray
 
