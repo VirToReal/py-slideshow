@@ -20,10 +20,9 @@ import sys
 import threading
 import time
 
-import inotify  # https://github.com/jamincollins/python-inotify
 import pyglet
 
-from inotify import watcher
+
 
 
 def update_pan_zoom_speeds():
@@ -150,42 +149,39 @@ def get_scale(window, image):
     return scale
 
 
-def watch_for_new_images(input_dir):
-    w = watcher.AutoWatcher()
-    try:
-        # Watch all paths recursively, and all events on them.
-        w.add_all(input_dir, inotify.IN_ALL_EVENTS)
-    except OSError as err:
-        print ('%s: %s' % (err.filename, err.strerror), file=sys.stderr)
+def getfilelist (input_dir):
+    flist = []
+    for f in os.listdir(input_dir):
+        if os.path.isfile(os.path.join(input_dir, f)):
+            if f.endswith(('jpg', 'png', 'gif')):
+                flist.append(f)
+    return flist
 
-    poll = select.poll()
-    poll.register(w, select.POLLIN)
 
-    timeout = None
+def watch_for_new_images(input_dir, sequencetime, ageoffile): #check for new Files in "input_dir" every "sequencetime" ms. The File have to be at least "ageoffile" ms old
 
-    threshold = watcher.Threshold(w, 512)
+    filelist = []
+    loopcount = 0
 
     while (not threadwhile.is_set()):
-        events = poll.poll(timeout)
-        nread = 0
-        if threshold() or not events:
-            print('reading,', threshold.readable(), 'bytes available')
-            for evt in w.read(0):
-                nread += 1
-
-                events = inotify.decode_mask(evt.mask)
-                if 'IN_MOVED_TO' in events or 'IN_CREATE' in events:
-                    filename = evt.fullpath
-                    if filename.endswith(('jpg', 'png', 'gif')):
-                        print("adding %s to the queue" % filename)
-                        new_pics.put(filename)
-
-        if nread:
-            timeout = None
-            poll.register(w, select.POLLIN)
+        if loopcount == 0: # first run, put all files in compare-list
+            tribelist = getfilelist(input_dir)
+            loopcount += 1
         else:
-            timeout = 1000
-            poll.unregister(w)
+            filelist = getfilelist(input_dir)
+            ss = set (tribelist)
+            fs = set (filelist)
+            new = list(ss.union(fs) - ss.intersection(fs)) #compare old with new list, write new pictures in a saparate list
+            for new_pic in new: #push new pictures into a queue
+                ctof = os.path.getctime(os.path.join(input_dir, new_pic))
+                ct = int(time.time())
+                print ("ctof: " + str(ctof) + " ct: " + str(ct))
+                if ctof < ct + (ageoffile/1000):
+                    new_pics.put(new_pic)
+                    print ("Found new Picture: " + str(new_pic))
+                    tribelist = filelist #make new list to a old one
+            time.sleep(sequencetime/1000)
+            loopcount += 1
 
 
 def shove_mouse(dt):
@@ -211,6 +207,8 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('dir', help='directory of images', nargs='?', default=os.getcwd())
+    parser.add_argument('-c', '--checktime', help='check every <ms> for new pictures', type=float, dest='check_time', default=1000)
+    parser.add_argument('-a', '--ageoffile', help='new pictures have to be at least <ms> old after been created. Depending on your system, pictures will take some time until completly copied/moved', type=float, dest='age_of_file', default=500)
     parser.add_argument('-w', '--wait', help='time between each picture', type=float, dest='wait_time', default=3.0)
     parser.add_argument('-r', '--random', help='random picture select', dest='random', action='store_true', default=False)
     parser.add_argument('-i', '--insert', help='add every <INSERT> pictures a picture from <INSERT> directory, example: -i 5 /home/user/pictures/', nargs=2)
@@ -223,7 +221,7 @@ def main():
 
     image_paths = get_image_paths(args.dir)
     threadwhile = threading.Event()
-    thread = threading.Thread(target=watch_for_new_images, args=(args.dir,))
+    thread = threading.Thread(target=watch_for_new_images, args=(args.dir, args.check_time, args.age_of_file))
     thread.start()
 
     window = pyglet.window.Window(fullscreen=True)
