@@ -175,8 +175,7 @@ def watch_for_new_images(input_dir, sequencetime, ageoffile): #check for new Fil
             for new_pic in new: #push new pictures into a queue
                 ctof = os.path.getctime(os.path.join(input_dir, new_pic))
                 ct = int(time.time())
-                print ("ctof: " + str(ctof) + " ct: " + str(ct))
-                if ctof < ct + (ageoffile/1000):
+                if ctof + ageoffile/1000 < ct:
                     new_pics.put(new_pic)
                     print ("Found new Picture: " + str(new_pic))
                     tribelist = filelist #make new list to a old one
