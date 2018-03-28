@@ -117,7 +117,7 @@ def update_image(dt):
         filenameext = os.path.split(filename)
         filenamevar = os.path.splitext(filenameext[1])
         filenamevar = filenamevar[0].replace('_', ' ')
-        if not args.insert:
+        if args.picinfo:
             filetime = time.localtime(filetime)
             label.text = "<font color='#ffffff' size='5'>%s </font> <font color='#C0C0C0' size='3'> %s.%s.%s %s:%s:%s</font> " % (str(filenamevar), str(filetime[2]),str(filetime[1]), str(filetime[0]), str(filetime[3]), str(filetime[4]), str(filetime[5]))
 
@@ -161,6 +161,7 @@ def getfilelist (input_dir):
 def watch_for_new_images(input_dir, sequencetime, ageoffile): #check for new Files in "input_dir" every "sequencetime" ms. The File have to be at least "ageoffile" ms old
 
     filelist = []
+    worklist = []
     loopcount = 0
 
     while (not threadwhile.is_set()):
@@ -168,17 +169,24 @@ def watch_for_new_images(input_dir, sequencetime, ageoffile): #check for new Fil
             tribelist = getfilelist(input_dir)
             loopcount += 1
         else:
+            ct = int(time.time()) # current time
             filelist = getfilelist(input_dir)
             ss = set (tribelist)
             fs = set (filelist)
             new = list(ss.union(fs) - ss.intersection(fs)) #compare old with new list, write new pictures in a saparate list
-            for new_pic in new: #push new pictures into a queue
-                ctof = os.path.getctime(os.path.join(input_dir, new_pic))
-                ct = int(time.time())
-                if ctof + ageoffile/1000 < ct:
-                    new_pics.put(new_pic)
-                    print ("Found new Picture: " + str(new_pic))
-                    tribelist = filelist #make new list to a old one
+            for new_pic in new: #push new pictures into a queue with its insert-time
+                worklist.append((new_pic, ct))
+
+            i = 0
+            for new_work in worklist: #progress new pictures just after a defined age_of_file
+                if ct > new_work[1] + ageoffile/1000 :
+                    new_pics.put(os.path.join(input_dir, new_work[0]))
+                    print ("Found new Picture: " + str(new_work[0]))
+                    del worklist[i]
+                i += 1
+
+
+            tribelist = filelist #make new list to a old one
             time.sleep(sequencetime/1000)
             loopcount += 1
 
@@ -213,6 +221,7 @@ def main():
     parser.add_argument('-i', '--insert', help='add every <INSERT> pictures a picture from <INSERT> directory, example: -i 5 /home/user/pictures/', nargs=2)
     parser.add_argument('-e', '--effects', help='activate pan/zoom effects in slideshow', dest='effects', action='store_true', default=False)
     parser.add_argument('-t', '--timeray', help='show timeray', dest='timeray', action='store_true', default=False)
+    parser.add_argument('-p', '--picinfo', help='show filename and date in slideshow', dest='picinfo', action='store_true', default=False)
     args = parser.parse_args()
 
     if args.insert:
