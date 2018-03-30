@@ -27,7 +27,7 @@ Random image slideshow in Python with OpenGL pan/zoom effects and a timeray.
 
     $ ./slideshow.py -h
    usage: slideshow.py [-h] [-c CHECK_TIME] [-a AGE_OF_FILE] [-w WAIT_TIME] [-r]
-                    [-i INSERT INSERT] [-e] [-t]
+                    [-i INSERT INSERT] [-e] [-x] [-t] [-p] [-g]
                     [dir]
 
     positional arguments:
@@ -48,8 +48,16 @@ Random image slideshow in Python with OpenGL pan/zoom effects and a timeray.
                             add every <INSERT> pictures a picture from <INSERT>
                             directory, example: -i 5 /home/user/pictures/
       -e, --effects         activate pan/zoom effects in slideshow
+      -x, --eXpand          resize to fit the screen
       -t, --timeray         show timeray
-
+      -p, --picinfo         show filename and date in slideshow
+      -g, --raspgpio        reads the GPIO of a raspberry on startup, and executes
+                            commands depending on the set of pins. Pin 3 = Random,
+                            Pin 5 = Effects, Pin 7 = Expand, Pin 11 = Timeray, Pin
+                            12 = Picinfo, Pin 13 = 1. Digit of Time in Binary-
+                            Format, Pin 14 = 2. Digit of Time in Binary-Format,
+                            Pin 15 = 3. Digit of Time in Binary-Format, Pin 16 =
+                            4. Digit of time in Binary-Format
 
 **Example**::
 
