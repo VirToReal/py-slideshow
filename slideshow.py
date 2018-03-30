@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 #
+#  Copyright (c) 2018, Benjamin Hirmer
+#  Dev: https://github.com/VirToReal/py-slideshow/
+#
 #  Copyright (c) 2015, Jamin W. Collins <jamin.collins@gmail.com>
 #  Dev: https://github.com/jamincollins/py-slideshow
 #
@@ -8,7 +11,6 @@
 #
 #  Dev: https://github.com/cgoldberg/py-slideshow
 #  License: GPLv3
-
 
 import argparse
 import os
@@ -21,8 +23,6 @@ import threading
 import time
 
 import pyglet
-
-
 
 
 def update_pan_zoom_speeds():
@@ -89,7 +89,7 @@ def update_image(dt):
             filename = image_paths2[image_number2][0]
         else:
             images += 1
-            if args.random: # turn random picture-chooser on/off
+            if option_random: # turn random picture-chooser on/off
                 ramdomchoice = random.choice(image_paths)
                 filename = ramdomchoice[0]
                 filetime = ramdomchoice[1]
@@ -105,19 +105,23 @@ def update_image(dt):
         window.clear()
         img = pyglet.image.load(filename)
         sprite.image = img
-        sprite.scale = get_scale(window, img)
+        if option_expand:
+            sprite.scale_y = float(window.height) / float(img.height) / 2.67 # don't ask me where those 2.67 came from
+            sprite.scale_x = float(window.width) / float(img.width) / 2.67
+        else:
+            sprite.scale = get_scale(window, img)
         sprite.x = 0
         sprite.y = 0
         update_pan_zoom_speeds()
 
-        if args.timeray and not args.insert: # draw active Point for Timeline
+        if option_timeray and not args.insert: # draw active Point for Timeline
             activetimesprite.x = 5 # Position of Timeline in Picutre from left
             activetimesprite.y = generate_timepos(filetime)
 
         filenameext = os.path.split(filename)
         filenamevar = os.path.splitext(filenameext[1])
         filenamevar = filenamevar[0].replace('_', ' ')
-        if args.picinfo:
+        if option_picinfo:
             filetime = time.localtime(filetime)
             label.text = "<font color='#ffffff' size='5'>%s </font> <font color='#C0C0C0' size='3'> %s.%s.%s %s:%s:%s</font> " % (str(filenamevar), str(filetime[2]),str(filetime[1]), str(filetime[0]), str(filetime[3]), str(filetime[4]), str(filetime[5]))
 
@@ -207,6 +211,10 @@ def main():
     global threadwhile
     global args
     global activetimesprite
+    global option_random
+    global option_expand
+    global option_timeray
+    global option_picinfo
 
     new_pics = queue.Queue()
     activetimesprite = None
@@ -220,9 +228,105 @@ def main():
     parser.add_argument('-r', '--random', help='random picture select', dest='random', action='store_true', default=False)
     parser.add_argument('-i', '--insert', help='add every <INSERT> pictures a picture from <INSERT> directory, example: -i 5 /home/user/pictures/', nargs=2)
     parser.add_argument('-e', '--effects', help='activate pan/zoom effects in slideshow', dest='effects', action='store_true', default=False)
+    parser.add_argument('-x', '--eXpand', help='resize to fit the screen', dest='eXpand', action='store_true', default=False)
     parser.add_argument('-t', '--timeray', help='show timeray', dest='timeray', action='store_true', default=False)
     parser.add_argument('-p', '--picinfo', help='show filename and date in slideshow', dest='picinfo', action='store_true', default=False)
+    parser.add_argument('-g', '--raspgpio', help='reads the GPIO of a raspberry on startup, and executes commands depending on the set of pins. Pin 3 = Random, Pin 5 = Effects, Pin 7 = Expand, Pin 11 = Timeray, Pin 12 = Picinfo, Pin 13 = 1. Digit of Time in Binary-Format, Pin 14 = 2. Digit of Time in Binary-Format, Pin 15 = 3. Digit of Time in Binary-Format, Pin 16 = 4. Digit of time in Binary-Format', dest='raspgpio', action='store_true', default=False)
     args = parser.parse_args()
+
+    if args.raspgpio:
+        try:
+            import RPi.GPIO as GPIO
+            GPIO.setwarnings(False) # override occupied pins
+            GPIO.setmode(GPIO.BOARD) # define GPIO-Numbers as Pin-Number
+            GPIO.setup(3, GPIO.IN) # Pin 3 - Random
+            GPIO.setup(5, GPIO.IN) # Pin 5 - Effects
+            GPIO.setup(7, GPIO.IN) # Pin 7 - Expand
+            GPIO.setup(11, GPIO.IN) # Pin 11 - Timeray
+            GPIO.setup(12, GPIO.IN) # Pin 12 - Picinfo
+            GPIO.setup(13, GPIO.IN) # Pin 13 - Binear-Bit 1 for Wait-Time
+            GPIO.setup(15, GPIO.IN) # Pin 14 - Binear-Bit 2 for Wait-Time
+            GPIO.setup(16, GPIO.IN) # Pin 15 - Binear-Bit 3 for Wait-Time
+            GPIO.setup(18, GPIO.IN) # Pin 16 - Binear-Bit 4 for Wait-Time
+            #GPIO.setup(19, GPIO.IN) # spare
+            #GPIO.setup(21, GPIO.IN) # spare
+            #GPIO.setup(22, GPIO.IN) # spare
+            #GPIO.setup(23, GPIO.IN) # spare
+
+            if GPIO.input(3) is 1:
+                option_random = True
+                print ("GPIO: Random-Mode enabled")
+            else:
+                option_random = False
+
+            if GPIO.input(5) is 1:
+                option_effects = True
+                print ("GPIO: Effects enabled")
+            else:
+                option_effects = False
+
+            if GPIO.input(7) is 1:
+                option_expand = True
+                print ("GPIO: Fit Pictures to Screen enabled")
+            else:
+                option_effects = False
+
+            if GPIO.input(11) is 1:
+                option_timeray = True
+                print ("GPIO: Timeray enabled")
+            else:
+                option_timeray = False
+
+            if GPIO.input(12) is 1:
+                option_picinfo = True
+                print ("GPIO: PicInfo enabled")
+            else:
+                option_picinfo = False
+
+            if GPIO.input(13) is 1:
+                Time_Bit1 = 1
+                print ("GPIO: 1. Binary Digit reads 1")
+            else:
+                Time_Bit1 = 0
+                print ("GPIO: 1. Binary Digit reads 0")
+            if GPIO.input(15) is 1:
+                Time_Bit2 = 1
+                print ("GPIO: 2. Binary Digit reads 1")
+            else:
+                Time_Bit2 = 0
+                print ("GPIO: 2. Binary Digit reads 0")
+            if GPIO.input(16) is 1:
+                Time_Bit3 = 1
+                print ("GPIO: 3. Binary Digit reads 1")
+            else:
+                Time_Bit3 = 0
+                print ("GPIO: 3. Binary Digit reads 0")
+            if GPIO.input(18) is 1:
+                Time_Bit4 = 1
+                print ("GPIO: 4. Binary Digit reads 1")
+            else:
+                Time_Bit4 = 0
+                print ("GPIO: 4. Binary Digit reads 0")
+
+            bindigits = str(Time_Bit1) + str(Time_Bit2) + str(Time_Bit3) + str(Time_Bit4)
+            intdigits = int(bindigits, 4)
+
+            if intdigits == 0:
+                option_waittime = 3
+            else:
+                option_waittime = intdigits
+
+        except:
+            print ("couldn't install libary for raspberry gpio, please install with 'sudo apt-get install python3-rpi.gpio'")
+            raise SystemExit(0)
+
+    else:
+        option_random = args.random
+        option_effects = args.effects
+        option_expand = args.eXpand
+        option_timeray = args.timeray
+        option_picinfo = args.picinfo
+        option_waittime = args.wait_time
 
     if args.insert:
         image_paths2 = get_image_paths(args.insert[1])
@@ -235,7 +339,7 @@ def main():
     window = pyglet.window.Window(fullscreen=True)
     label = pyglet.text.HTMLLabel('', x=window.width//2, y=30, anchor_x='center', anchor_y='center')
 
-    if args.random:
+    if option_random:
         rndch = random.choice(image_paths)
         img = pyglet.image.load(rndch[0])
         time = rndch[1]
@@ -244,7 +348,7 @@ def main():
         img = pyglet.image.load(slch[0])
         time = slch[1]
 
-    if args.timeray:
+    if option_timeray:
         timesprites = generate_timeray()
         imgT = pyglet.image.load('Timepoint_Active.png')
         activetimesprite = pyglet.sprite.Sprite(imgT)
@@ -255,7 +359,7 @@ def main():
     def on_draw():
         sprite.draw()
         label.draw()
-        if args.timeray: # draw Points for Timeline
+        if option_timeray: # draw Points for Timeline
             pyglet.gl.glLineWidth(3)
             pyglet.graphics.draw(2, pyglet.gl.GL_LINES, ("v2f", (15, 10, 15, window.height-10)), ('c3B', (0, 0, 255, 0, 255, 0)))
             for timesprite in timesprites:
@@ -271,10 +375,10 @@ def main():
     sprite = pyglet.sprite.Sprite(img)
     sprite.scale = get_scale(window, img)
 
-    pyglet.clock.schedule_interval(update_image, args.wait_time)
+    pyglet.clock.schedule_interval(update_image, option_waittime)
     #pyglet.clock.schedule_interval(shove_mouse, 6.0)
 
-    if args.effects:
+    if option_effects:
         pyglet.clock.schedule_interval(update_pan, 1/60.0)
         pyglet.clock.schedule_interval(update_zoom, 1/60.0)
 
