@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 #
-#  Copyright (c) 2018, Benjamin Hirmer
-#  Dev: https://github.com/VirToReal/py-slideshow/
-#
 #  Copyright (c) 2015, Jamin W. Collins <jamin.collins@gmail.com>
 #  Dev: https://github.com/jamincollins/py-slideshow
 #
@@ -11,6 +8,7 @@
 #
 #  Dev: https://github.com/cgoldberg/py-slideshow
 #  License: GPLv3
+
 
 import argparse
 import os
@@ -23,6 +21,8 @@ import threading
 import time
 
 import pyglet
+
+
 
 
 def update_pan_zoom_speeds():
@@ -308,8 +308,8 @@ def main():
                 Time_Bit4 = 0
                 print ("GPIO: 4. Binary Digit reads 0")
 
-            bindigits = str(Time_Bit1) + str(Time_Bit2) + str(Time_Bit3) + str(Time_Bit4)
-            intdigits = int(bindigits, 4)
+            bindigits = str(Time_Bit4) + str(Time_Bit3) + str(Time_Bit2) + str(Time_Bit1)
+            intdigits = int(bindigits, 2)
 
             if intdigits == 0:
                 option_waittime = 3
