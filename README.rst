@@ -1,4 +1,13 @@
 ==============================
+ATTENTION
+==============================
+I moved my repositories to gitlab, please do any suggestions there: https://gitlab.com/Hirmer/py-slideshow
+
+Thank you!
+
+
+
+==============================
 py-slideshow - image slideshow
 ==============================
 
